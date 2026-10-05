@@ -13,6 +13,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 SUBMISSIONS = ROOT / "submissions"
+LIBRARY = ROOT / "src" / "aimo_interp"
 DIST = ROOT / "dist"
 # Fixed timestamps keep the ZIP hash stable, so docs/submissions.md can identify uploads.
 FIXED_ZIP_TIME = (2020, 1, 1, 0, 0, 0)
@@ -27,6 +28,17 @@ def collect_entries(directory: Path) -> dict[str, bytes]:
         if path.is_file() and not is_cache and not path.name.startswith("."):
             entries[relative.as_posix()] = path.read_bytes()
     return entries
+
+
+def with_library(entries: dict[str, bytes]) -> dict[str, bytes]:
+    """Vendor src/aimo_interp into the ZIP when any submission module imports it."""
+    imports_library = any(
+        name.endswith(".py") and b"aimo_interp" in content for name, content in entries.items()
+    )
+    if not imports_library:
+        return entries
+    library = {f"aimo_interp/{name}": content for name, content in collect_entries(LIBRARY).items()}
+    return {**entries, **library}
 
 
 def apply_track_marker(entries: dict[str, bytes], is_small: bool) -> dict[str, bytes]:
@@ -61,7 +73,7 @@ def main() -> None:
         raise SystemExit(f"missing solution.py in {source}")
 
     is_small = not args.main
-    entries = apply_track_marker(collect_entries(source), is_small)
+    entries = apply_track_marker(with_library(collect_entries(source)), is_small)
     suffix = "small" if is_small else "main"
     output = DIST / f"{args.name}-{suffix}.zip"
     write_zip(output, entries)
