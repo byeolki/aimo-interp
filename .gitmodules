@@ -1,0 +1,3 @@
+[submodule "third_party/getting-started"]
+	path = third_party/getting-started
+	url = https://github.com/aimo-interp/getting-started.git
