@@ -7,6 +7,7 @@ runs/features/. Run on a GPU host after `uv run scripts/fetch_labels.py`.
 """
 
 import argparse
+import json
 import sys
 import time
 from pathlib import Path
@@ -16,7 +17,6 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from aimo_interp.data import read_rows  # noqa: E402
 from aimo_interp.features import extract_hidden_states, load_model, release  # noqa: E402
 from aimo_interp.models import SMALL_TRACK_MODELS, safe_model_id  # noqa: E402
 
@@ -24,8 +24,11 @@ LABELS = ROOT / "data" / "labels.jsonl"
 OUTPUT_DIR = ROOT / "runs" / "features"
 
 
-def unique_problems(labels_path: Path) -> tuple[list[str], list[str]]:
-    by_id = {row.problem_id: row.problem for row in read_rows(labels_path)}
+def unique_problems(path: Path) -> tuple[list[str], list[str]]:
+    """Read any JSONL with ``problem_id`` and ``problem`` fields (labels or problem pool)."""
+    with path.open(encoding="utf-8") as handle:
+        rows = [json.loads(line) for line in handle if line.strip()]
+    by_id = {row["problem_id"]: row["problem"] for row in rows}
     problem_ids = sorted(by_id)
     return problem_ids, [by_id[problem_id] for problem_id in problem_ids]
 
@@ -34,12 +37,14 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--models", nargs="*", default=list(SMALL_TRACK_MODELS))
     parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument("--problems", type=Path, default=LABELS)
+    parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
     args = parser.parse_args()
 
-    problem_ids, problems = unique_problems(LABELS)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    problem_ids, problems = unique_problems(args.problems)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
     for model_id in args.models:
-        output = OUTPUT_DIR / f"{safe_model_id(model_id)}.npz"
+        output = args.output_dir / f"{safe_model_id(model_id)}.npz"
         if output.exists():
             print(f"skip {model_id}: {output.name} exists")
             continue

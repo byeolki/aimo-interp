@@ -15,6 +15,7 @@ Usage: python generate.py --model Qwen/Qwen3.5-4B
 import argparse
 import hashlib
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -30,13 +31,14 @@ from aimo_interp.problems import read_problems  # noqa: E402
 PROBLEMS = ROOT / "data" / "problems.jsonl"
 OUTPUT_DIR = ROOT / "runs" / "02-self-labels"
 K_ORIGINAL = 8
-VARIANTS_PER_FAMILY = 2
-SAMPLES_PER_VARIANT = 4
-# The organizers allow 100k tokens. 16k keeps a 5090 run to hours; truncated answers count
-# as wrong, which lowers base accuracy on the hardest problems. Reported as a limitation.
-MAX_MODEL_LEN = 16384
+VARIANTS_PER_FAMILY = 1
+SAMPLES_PER_VARIANT = 6
+# The organizers allow 100k tokens. 12k keeps the run cheap; truncated answers count as wrong,
+# which lowers base accuracy on the hardest problems. Reported as a limitation.
+MAX_MODEL_LEN = 12288
 INSTRUCTION = "\n\nPlease reason step by step, and put your final answer within \\boxed{}."
-CHUNK = 40
+# Large chunks keep the batch full; small ones idle the GPU on the longest tail sequences.
+CHUNK = 120
 
 
 def prompt_records(problems, stage: str, solved: set[str]) -> list[dict]:
@@ -103,15 +105,25 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True)
     parser.add_argument("--limit", type=int, default=None, help="first N problems only (smoke test)")
+    parser.add_argument("--problems", type=Path, default=PROBLEMS)
     args = parser.parse_args()
 
     from vllm import LLM
 
-    problems = read_problems(PROBLEMS)[: args.limit]
+    problems = read_problems(args.problems)[: args.limit]
     output = OUTPUT_DIR / f"{safe_model_id(args.model)}.jsonl"
     output.parent.mkdir(parents=True, exist_ok=True)
+    import torch
+
+    engine_options: dict = {"kv_cache_dtype": "auto"}
+    if torch.cuda.get_device_capability(0)[0] >= 12:
+        # The vast.ai image ships nvcc 12.8 and FlashInfer JIT refuses sm_120 below 12.9, so on
+        # Blackwell every FlashInfer path (attention, Qwen3.5 GDN prefill, sampler) uses Triton.
+        os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
+        engine_options = {"kv_cache_dtype": "fp8", "attention_config": {"backend": "TRITON_ATTN"},
+                          "additional_config": {"gdn_prefill_backend": "triton"}}
     llm = LLM(model=args.model, max_model_len=MAX_MODEL_LEN, gpu_memory_utilization=0.92,
-              kv_cache_dtype="fp8", enable_prefix_caching=True, trust_remote_code=False)
+              enable_prefix_caching=True, disable_log_stats=False, **engine_options)
     tokenizer = llm.get_tokenizer()
 
     for stage in ("A", "B"):
