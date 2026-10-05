@@ -123,7 +123,9 @@ def main() -> None:
         engine_options = {"kv_cache_dtype": "fp8", "attention_config": {"backend": "TRITON_ATTN"},
                           "additional_config": {"gdn_prefill_backend": "triton"}}
     llm = LLM(model=args.model, max_model_len=MAX_MODEL_LEN, gpu_memory_utilization=0.92,
-              enable_prefix_caching=True, disable_log_stats=False, **engine_options)
+              enable_prefix_caching=True, disable_log_stats=False,
+              # KV usage stays under 40% at the default 256 sequences on an 80 GB card.
+              max_num_seqs=512, **engine_options)
     tokenizer = llm.get_tokenizer()
 
     for stage in ("A", "B"):
