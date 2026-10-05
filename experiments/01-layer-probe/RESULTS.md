@@ -55,3 +55,19 @@ hash.
   with more labels can. This needs generated labels (planned 10/12 onward).
 - With 34 official rows the standard error on official accuracy is about 8 points; the
   difference between the top configurations is inside that.
+
+## Caveat found after the run (Discord, 2026-10-05)
+
+Organizers (announcements, 2026-09-15/16) found that top leaderboard solutions separated labels
+by problem features and fell below chance on new problems. The validation set was rebuilt so
+labels are **balanced per problem and per model**: each problem is robust for some models and
+spurious for others. The test set is built the same way.
+
+In our 34 official training rows, 9 problems have labels for more than one small model and
+**none of them has mixed labels**. So the 0.72 CV score can come entirely from reading problem
+difficulty, which the per-problem balance cancels out. The shared probe adds the model only as
+a one-hot bias (no problem x model interaction), so on a per-problem balanced set it should be
+expected near chance. Treat layer-probe v1 as a diagnostic, not a competitive entry.
+
+Next: per-model self-probes on the target's own activations, and self-generated labels where the
+same problem gets different labels across models.
