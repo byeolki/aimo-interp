@@ -13,13 +13,19 @@ Writes runs/01-layer-probe/cv.csv and prints the best layer per configuration. P
 the best layer on this same CV is optimistic; treat those numbers as upper bounds.
 """
 
+import os
 import re
 import sys
+
+# Each fit is a tiny matrix; multithreaded BLAS thrashes. Parallelize across configs instead.
+for _variable in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_variable, "1")
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import StratifiedGroupKFold
 
@@ -172,15 +178,14 @@ def summarize(frame: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> None:
     table = load_table()
-    records = run_baselines(table)
-    for encoder_id in SMALL_TRACK_MODELS:
-        if not (FEATURES_DIR / f"{safe_model_id(encoder_id)}.npz").exists():
-            print(f"missing features for {encoder_id}, skipping")
-            continue
+    available = [model for model in SMALL_TRACK_MODELS if (FEATURES_DIR / f"{safe_model_id(model)}.npz").exists()]
+    tasks = [delayed(run_baselines)(table)]
+    for encoder_id in available:
         for pooling in ("last", "mean"):
-            records += run_shared(table, encoder_id, pooling)
-            records += run_self(table, encoder_id, pooling)
-            print(f"done {encoder_id} / {pooling}", flush=True)
+            tasks.append(delayed(run_shared)(table, encoder_id, pooling))
+            tasks.append(delayed(run_self)(table, encoder_id, pooling))
+    results = Parallel(n_jobs=min(len(tasks), os.cpu_count() or 1), verbose=5)(tasks)
+    records = [record for result in results for record in result]
 
     frame = pd.DataFrame(records)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
