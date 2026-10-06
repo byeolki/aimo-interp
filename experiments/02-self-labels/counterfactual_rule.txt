@@ -1,0 +1,12 @@
+labeled 436 mixed problems 63
+pseudo-drop <= 0.0: balanced mixed acc 0.829
+pseudo-drop <= 0.1: balanced mixed acc 0.805
+pseudo-drop <= 0.2: balanced mixed acc 0.790
+pseudo-drop <= 0.3: balanced mixed acc 0.706
+pseudo-drop <= 0.5: balanced mixed acc 0.548
+--- only rows with variant samples (no gold-based shortcut)
+rows 248 robust 132 mixed problems 38
+pseudo-drop <= 0.0: balanced mixed 0.658   all rows 0.770
+pseudo-drop <= 0.1: balanced mixed 0.639   all rows 0.766
+pseudo-drop <= 0.2: balanced mixed 0.638   all rows 0.750
+pseudo-drop <= 0.3: balanced mixed 0.592   all rows 0.710
