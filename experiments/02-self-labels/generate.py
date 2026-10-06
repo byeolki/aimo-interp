@@ -131,6 +131,8 @@ def main() -> None:
     parser.add_argument("--model", required=True)
     parser.add_argument("--limit", type=int, default=None, help="first N problems only (smoke test)")
     parser.add_argument("--problems", type=Path, default=PROBLEMS)
+    # fp8 KV made Skywork-OR1-Math-7B (Qwen2.5 base) degenerate into repetition loops.
+    parser.add_argument("--kv-cache-dtype", default="fp8", choices=["fp8", "auto"])
     args = parser.parse_args()
 
     from vllm import LLM
@@ -145,7 +147,7 @@ def main() -> None:
         # The vast.ai image ships nvcc 12.8 and FlashInfer JIT refuses sm_120 below 12.9, so on
         # Blackwell every FlashInfer path (attention, Qwen3.5 GDN prefill, sampler) uses Triton.
         os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
-        engine_options = {"kv_cache_dtype": "fp8", "attention_config": {"backend": "TRITON_ATTN"},
+        engine_options = {"kv_cache_dtype": args.kv_cache_dtype, "attention_config": {"backend": "TRITON_ATTN"},
                           "additional_config": {"gdn_prefill_backend": "triton"}}
     llm = LLM(model=args.model, max_model_len=MAX_MODEL_LEN, gpu_memory_utilization=0.92,
               enable_prefix_caching=True, disable_log_stats=False, **engine_options)

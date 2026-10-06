@@ -11,7 +11,9 @@ mkdir -p runs/02-self-labels
 
 for model in "$@"; do
   echo "=== generate $model $(date -u +%H:%M)"
-  .venv-vllm/bin/python experiments/02-self-labels/generate.py --model "$model" --problems data/problems_small.jsonl
+  kv_dtype=fp8
+  [[ "$model" == Skywork/* ]] && kv_dtype=auto
+  .venv-vllm/bin/python experiments/02-self-labels/generate.py --model "$model" --problems data/problems_small.jsonl --kv-cache-dtype "$kv_dtype"
   echo "=== extract $model $(date -u +%H:%M)"
   .venv/bin/python experiments/01-layer-probe/extract.py --models "$model" \
     --problems data/problems_small.jsonl --output-dir runs/features-self
