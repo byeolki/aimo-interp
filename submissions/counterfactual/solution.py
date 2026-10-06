@@ -15,6 +15,8 @@ import time
 from pathlib import Path
 
 RUN_START = time.time()
+# Must be set before CUDA initializes; long generations fragment the default allocator.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 SOLUTION_DIR = Path(__file__).resolve().parent
 # The Codabench ingestion loads this file by path without adding its directory to sys.path.
 if str(SOLUTION_DIR) not in sys.path:
@@ -39,7 +41,7 @@ SEED = 20261101
 # benchmark in experiments/03-counterfactual and kept pessimistic.
 PRIOR_STEP_SECONDS = float(os.environ.get("AIMO_PRIOR_STEP_SECONDS", 0.06))
 # Fraction of free GPU memory handed to the KV cache of one generation chunk.
-KV_MEMORY_FRACTION = 0.6
+KV_MEMORY_FRACTION = 0.45
 
 PROBE = SelfProbe(SOLUTION_DIR / "artifacts")
 _loaded = None
@@ -76,21 +78,21 @@ def _sequences_per_chunk(loaded, budget: int) -> int:
     return max(5, int(free_bytes * KV_MEMORY_FRACTION // (bytes_per_token * (budget + 1024))))
 
 
-def _plan_budget(loaded, n_problems: int, seconds_left: float, step_seconds: float) -> tuple[int, int] | None:
+def _plan_budget(loaded, n_problems: int, seconds_left: float, step_seconds: float, max_budget: int) -> tuple[int, int] | None:
     """Largest budget whose chunks for all remaining problems fit in ``seconds_left``.
 
     Decoding is memory-bound, so a chunk takes about ``budget * step_seconds`` regardless of
     how many sequences it holds; bigger chunks are nearly free.
     """
     slots_per_problem = 2 + len(FAMILIES)
-    for budget in BUDGETS:
+    for budget in (b for b in BUDGETS if b <= max_budget):
         per_chunk = max(1, _sequences_per_chunk(loaded, budget) // slots_per_problem)
         chunks = -(-n_problems // per_chunk)
         if chunks * budget * step_seconds <= seconds_left:
             return budget, per_chunk
     # Not everything fits: spend what is left on as many problems as possible at the floor.
     budget = BUDGETS[-1]
-    if budget * step_seconds <= seconds_left:
+    if budget <= max_budget and budget * step_seconds <= seconds_left:
         return budget, max(1, _sequences_per_chunk(loaded, budget) // slots_per_problem)
     return None
 
@@ -98,18 +100,34 @@ def _plan_budget(loaded, n_problems: int, seconds_left: float, step_seconds: flo
 def _counterfactual(model_id: str, problems: list[str], fallback: list[bool], deadline: float) -> tuple[list[bool], dict]:
     loaded = _model(model_id)
     predictions = list(fallback)
-    stats = {"budgets": [], "counterfactual": 0}
+    stats = {"budgets": [], "counterfactual": 0, "oom_retries": 0}
     step_seconds = PRIOR_STEP_SECONDS
+    max_per_chunk = len(problems)
+    max_budget = BUDGETS[0]
     index = 0
     while index < len(problems):
-        plan = _plan_budget(loaded, len(problems) - index, deadline - time.time(), step_seconds)
+        plan = _plan_budget(loaded, len(problems) - index, deadline - time.time(), step_seconds, max_budget)
         if plan is None:
             break
         budget, per_chunk = plan
+        per_chunk = min(per_chunk, max_per_chunk)
         chunk = list(range(index, min(len(problems), index + per_chunk)))
         slots = plan_slots([problems[i] for i in chunk])
         started = time.time()
-        results = sample_answers(loaded, [slot.text for slot in slots], budget, seed=SEED + index)
+        try:
+            results = sample_answers(loaded, [slot.text for slot in slots], budget, seed=SEED + index)
+        except torch.cuda.OutOfMemoryError:
+            # The KV estimate ignores activations and logits; retry the same problems smaller.
+            torch.cuda.empty_cache()
+            stats["oom_retries"] += 1
+            if per_chunk > 1:
+                max_per_chunk = max(1, per_chunk // 2)
+                continue
+            smaller = [b for b in BUDGETS if b < budget]
+            if not smaller:
+                break
+            max_budget = smaller[0]
+            continue
         # Keep the slower of prior and observation so one fast chunk cannot cause an overrun.
         step_seconds = max(step_seconds * 0.5, (time.time() - started) / budget)
         answers = {i: {ORIGINAL: [], **{f: [] for f in FAMILIES}} for i in range(len(chunk))}
