@@ -1,0 +1,10 @@
+wall 3072s
+Qwen/Qwen3.5-4B: {'budgets': [2048, 2048, 4096, 4096, 4096, 8192, 8192], 'counterfactual': 12, 'oom_retries': 0, 'fallback': 0}, 785s elapsed
+Skywork/Skywork-OR1-Math-7B: {'budgets': [8192], 'counterfactual': 3, 'oom_retries': 0, 'fallback': 0}, 1313s elapsed
+allenai/Olmo-3-7B-Think: {'budgets': [1024, 2048, 4096, 4096, 4096, 2048, 4096, 4096, 4096], 'counterfactual': 9, 'oom_retries': 0, 'fallback': 0}, 2174s elapsed
+deepseek-ai/DeepSeek-R1-0528-Qwen3-8B: {'budgets': [2048, 2048, 4096, 4096, 4096, 4096, 4096, 4096], 'counterfactual': 10, 'oom_retries': 0, 'fallback': 0}, 3071s elapsed
+accuracy 13/34 = 0.382, balanced accuracy 0.475, predicted robust 9/34
+  DeepSeek-R1-0528-Qwen3-8B: 5/10
+  Olmo-3-7B-Think: 4/9
+  Qwen3.5-4B: 3/12
+  Skywork-OR1-Math-7B: 1/3
