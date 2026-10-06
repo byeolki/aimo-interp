@@ -45,6 +45,8 @@ SHARED_ENCODER = "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
 N_FOLDS = 5
 SEEDS = (0, 1, 2)
 INCLUDE_BASE_ZERO = os.environ.get("INCLUDE_BASE_ZERO", "1") == "1"
+# Models whose self-label run has finished; the others are left out of this comparison.
+MODELS = tuple(m for m in SMALL_TRACK_MODELS if (FEATURE_DIRS[0] / f"{safe_model_id(m)}.npz").exists())
 
 
 def load_rows() -> pd.DataFrame:
@@ -58,6 +60,7 @@ def load_rows() -> pd.DataFrame:
     frame = pd.DataFrame(
         [{**r, "source": "generated"} for r in generated] + [{**r, "source": "official"} for r in official]
     )
+    frame = frame[frame["model_id"].isin(MODELS)]
     frame["is_robust"] = frame["is_robust"].astype(bool)
     per_problem = frame.groupby("problem_id")["is_robust"].nunique()
     frame["mixed"] = frame["problem_id"].map(per_problem) == 2
@@ -102,9 +105,9 @@ def fit_predict(features: np.ndarray, labels: np.ndarray, train, test) -> np.nda
 
 def self_predictions(frame: pd.DataFrame, layer_by_model: dict[str, int], pooling: str, seed: int) -> np.ndarray:
     predictions = np.zeros(len(frame), dtype=bool)
-    stores = {model: FeatureStore(model, pooling) for model in SMALL_TRACK_MODELS}
+    stores = {model: FeatureStore(model, pooling) for model in MODELS}
     for train, test in folds(frame, seed):
-        for model in SMALL_TRACK_MODELS:
+        for model in MODELS:
             rows = frame.index[frame["model_id"] == model].to_numpy()
             tr, te = np.intersect1d(train, rows), np.intersect1d(test, rows)
             if len(te) == 0:
@@ -121,7 +124,7 @@ def self_predictions(frame: pd.DataFrame, layer_by_model: dict[str, int], poolin
 
 def shared_predictions(frame: pd.DataFrame, layer: int, pooling: str, seed: int) -> np.ndarray:
     store = FeatureStore(SHARED_ENCODER, pooling)
-    onehot = np.stack([(frame["model_id"] == m).to_numpy(float) for m in SMALL_TRACK_MODELS], axis=1)
+    onehot = np.stack([(frame["model_id"] == m).to_numpy(float) for m in MODELS], axis=1)
     features = np.hstack([store.get(frame["problem_id"], layer), onehot])
     labels = frame["is_robust"].to_numpy()
     predictions = np.zeros(len(frame), dtype=bool)
@@ -169,6 +172,7 @@ def averaged(frame: pd.DataFrame, predict, config: dict) -> dict:
 
 def main() -> None:
     frame = load_rows()
+    print(f"models: {MODELS}")
     print(f"rows {len(frame)} (generated {sum(frame.source == 'generated')}, official {sum(frame.source == 'official')}), "
           f"mixed rows {int(frame.mixed.sum())} over {frame[frame.mixed].problem_id.nunique()} problems")
     print(frame.groupby(["model_id", "source"])["is_robust"].agg(["count", "mean"]).round(2).to_string())
@@ -181,9 +185,9 @@ def main() -> None:
             tasks.append(delayed(averaged)(frame, lambda s, l=layer, p=pooling: shared_predictions(frame, l, p, s),
                                            {"config": "shared", "pooling": pooling, "rel_depth": layer / (layers - 1)}))
         # Self probes use the same relative depth in every model so one knob is swept.
-        counts = {m: FeatureStore(m, pooling).layer_count() for m in SMALL_TRACK_MODELS}
+        counts = {m: FeatureStore(m, pooling).layer_count() for m in MODELS}
         for depth in np.linspace(0.1, 1.0, 19):
-            layer_by_model = {m: int(round(depth * (counts[m] - 1))) for m in SMALL_TRACK_MODELS}
+            layer_by_model = {m: int(round(depth * (counts[m] - 1))) for m in MODELS}
             tasks.append(delayed(averaged)(frame, lambda s, lm=layer_by_model, p=pooling: self_predictions(frame, lm, p, s),
                                            {"config": "self", "pooling": pooling, "rel_depth": round(float(depth), 3)}))
     results = pd.DataFrame(Parallel(n_jobs=os.cpu_count() or 1, verbose=2)(tasks))
