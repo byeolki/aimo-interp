@@ -52,7 +52,7 @@ Other findings for the report:
 `submissions/self-probe` (ZIP sha256 114d4b2a6539): per-model blend heads for the three
 models; Olmo and any other id use the shared v1 head. Offline contract test on the 34
 official rows: 0 invalid, 38 s wall time including loading four checkpoints, identical across
-two runs. Codabench ID 964172.
+two runs. Codabench ID 964172: 0.643 on the 14-case val set (same as layer-probe v1; one case = 7 points).
 
 ## Limitations
 
