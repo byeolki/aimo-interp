@@ -1,0 +1,39 @@
+models: ('Qwen/Qwen3.5-4B', 'Skywork/Skywork-OR1-Math-7B', 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B')
+rows 418 (generated 393, official 25), mixed rows 117 over 44 problems
+                                                 count  mean
+model_id                              source                
+Qwen/Qwen3.5-4B                       generated    132  0.75
+                                      official      12  0.67
+Skywork/Skywork-OR1-Math-7B           generated    132  0.78
+                                      official       3  0.67
+deepseek-ai/DeepSeek-R1-0528-Qwen3-8B generated    129  0.85
+                                      official      10  0.70
+[Parallel(n_jobs=16)]: Using backend LokyBackend with 16 concurrent workers.
+[Parallel(n_jobs=16)]: Done   9 out of 112 | elapsed:    8.1s
+[Parallel(n_jobs=16)]: Done 112 out of 112 | elapsed:   39.0s finished
+
+== base-accuracy
+       config  acc_all  acc_mixed  acc_balanced  acc_official pooling  rel_depth
+base-accuracy    0.663      0.744         0.746          0.32     NaN        NaN
+
+== majority
+  config  acc_all  acc_mixed  acc_balanced  acc_official pooling  rel_depth
+majority    0.787      0.547         0.542          0.68     NaN        NaN
+
+== self
+config  acc_all  acc_mixed  acc_balanced  acc_official pooling  rel_depth
+  self    0.770      0.610         0.606         0.573    mean       0.55
+  self    0.767      0.601         0.601         0.613    mean       0.50
+  self    0.764      0.595         0.595         0.587    mean       0.40
+  self    0.766      0.593         0.591         0.587    mean       0.45
+  self    0.760      0.593         0.588         0.547    mean       0.35
+  self    0.766      0.590         0.586         0.533    mean       0.60
+
+== shared
+config  acc_all  acc_mixed  acc_balanced  acc_official pooling  rel_depth
+shared    0.791      0.587         0.583         0.680    mean      0.722
+shared    0.776      0.578         0.578         0.680    mean      0.972
+shared    0.776      0.578         0.577         0.720    mean      0.944
+shared    0.786      0.575         0.576         0.680    mean      0.694
+shared    0.775      0.578         0.576         0.680    mean      0.778
+shared    0.776      0.573         0.572         0.587    mean      0.639

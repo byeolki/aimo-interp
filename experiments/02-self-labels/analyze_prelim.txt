@@ -1,0 +1,37 @@
+models: ('Qwen/Qwen3.5-4B', 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B')
+rows 283 (generated 261, official 22), mixed rows 56 over 28 problems
+                                                 count  mean
+model_id                              source                
+Qwen/Qwen3.5-4B                       generated    132  0.75
+                                      official      12  0.67
+deepseek-ai/DeepSeek-R1-0528-Qwen3-8B generated    129  0.85
+                                      official      10  0.70
+[Parallel(n_jobs=16)]: Using backend LokyBackend with 16 concurrent workers.
+[Parallel(n_jobs=16)]: Done   9 out of 112 | elapsed:    5.3s
+[Parallel(n_jobs=16)]: Done 112 out of 112 | elapsed:   24.6s finished
+
+== base-accuracy
+       config  acc_all  acc_mixed  acc_balanced  acc_official pooling  rel_depth
+base-accuracy      0.7      0.821         0.821         0.318     NaN        NaN
+
+== majority
+  config  acc_all  acc_mixed  acc_balanced  acc_official pooling  rel_depth
+majority    0.792        0.5           0.5         0.682     NaN        NaN
+
+== self
+config  acc_all  acc_mixed  acc_balanced  acc_official pooling  rel_depth
+  self    0.812      0.625         0.625         0.697    last       0.95
+  self    0.802      0.619         0.619         0.667    last       0.90
+  self    0.780      0.619         0.619         0.591    last       0.65
+  self    0.786      0.619         0.619         0.591    last       0.70
+  self    0.794      0.613         0.613         0.667    last       0.85
+  self    0.789      0.601         0.601         0.667    last       0.80
+
+== shared
+config  acc_all  acc_mixed  acc_balanced  acc_official pooling  rel_depth
+shared    0.764      0.560         0.560         0.712    mean      0.139
+shared    0.768      0.548         0.548         0.727    mean      0.028
+shared    0.779      0.536         0.536         0.576    last      0.778
+shared    0.762      0.536         0.536         0.636    mean      0.111
+shared    0.710      0.530         0.530         0.379    last      0.111
+shared    0.721      0.530         0.530         0.424    last      0.083
