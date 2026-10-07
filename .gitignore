@@ -5,7 +5,11 @@ __pycache__/
 .ruff_cache/
 
 # Public datasets are re-downloadable; hidden-state caches and runs are large.
-data/
+data/*
+!data/self_labels.jsonl
+!data/problems.jsonl
+!data/problems_small.jsonl
+!data/generations/
 runs/
 dist/
 *.pt
