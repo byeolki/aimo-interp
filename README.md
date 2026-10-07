@@ -63,3 +63,9 @@ all experiments was about USD 10.
 
 Offline, one RTX PRO 6000 (96 GB), 3600 s for the whole prediction run. Only the standard
 library and the packages pinned in `pyproject.toml` exist at evaluation time.
+
+## License
+
+Code is released under the MIT License (`LICENSE`). Problem statements in `data/` come from public
+competition datasets on Hugging Face (AI-MO, MathArena) and remain under their original terms;
+the self-generated labels and sampled answers are released under the same MIT terms.
