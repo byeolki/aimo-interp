@@ -1,0 +1,22 @@
+{
+  "model_order": [
+    "Qwen/Qwen3.5-4B",
+    "Skywork/Skywork-OR1-Math-7B",
+    "allenai/Olmo-3-7B-Think",
+    "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
+  ],
+  "heads": {
+    "*": {
+      "encoder_id": "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+      "pooling": "last",
+      "layer": 34,
+      "probe_file": "shared_probe.npz",
+      "uses_model_onehot": true
+    }
+  },
+  "fallback_prediction": true,
+  "notes": {
+    "trained_rows": "171",
+    "train_acc": "1.000"
+  }
+}

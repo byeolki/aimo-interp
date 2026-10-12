@@ -1,0 +1,2 @@
+seed 0: {'raw threshold': '0.563 (sd 0.021)', 'per-model median': '0.507 (sd 0.028)', 'per-problem rank': '0.374 (sd 0.031)', 'per-problem rank raw': '0.589 (sd 0.040)', 'model prior only': '0.626 (sd 0.040)'}
+seed 1: {'raw threshold': '0.527 (sd 0.020)', 'per-model median': '0.374 (sd 0.026)', 'per-problem rank': '0.430 (sd 0.056)', 'per-problem rank raw': '0.500 (sd 0.036)', 'model prior only': '0.626 (sd 0.041)'}

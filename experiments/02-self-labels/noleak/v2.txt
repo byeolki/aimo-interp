@@ -1,0 +1,38 @@
+models ('Qwen/Qwen3.5-4B', 'Skywork/Skywork-OR1-Math-7B', 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'); labeled rows 287, mixed 73; solve-rate rows 306
+[Parallel(n_jobs=28)]: Using backend LokyBackend with 28 concurrent workers.
+[Parallel(n_jobs=28)]: Done  7 out of 30 | elapsed:   43.7s remaining:  2.4min
+[Parallel(n_jobs=28)]: Done 23 out of 30 | elapsed:   51.1s remaining:   15.5s
+[Parallel(n_jobs=28)]: Done 30 out of 30 | elapsed:   54.2s finished
+
+== blend
+config    band pooling   alpha  base_corr  acc_all  acc_mixed  acc_balanced  acc_official
+ blend 0.7-0.9    last 10000.0      0.726    0.689      0.534         0.542         0.507
+ blend 0.6-1.0    last 10000.0      0.727    0.691      0.530         0.538         0.547
+ blend 0.5-0.7    mean 10000.0      0.543    0.691      0.530         0.532         0.573
+ blend 0.5-0.7    mean  1000.0      0.637    0.699      0.530         0.530         0.533
+ blend 0.8-1.0    last 10000.0      0.724    0.684      0.521         0.530         0.507
+ blend 0.6-0.8    last 10000.0      0.734    0.683      0.516         0.524         0.507
+ blend 0.5-0.7    mean   100.0      0.638    0.704      0.521         0.520         0.533
+ blend 0.6-0.8    mean  1000.0      0.635    0.693      0.521         0.520         0.507
+
+== direct_band
+     config    band pooling   alpha  base_corr  acc_all  acc_mixed  acc_balanced  acc_official
+direct_band 0.6-0.8    last  1000.0      0.742    0.763      0.575         0.571         0.653
+direct_band 0.6-0.8    last   100.0      0.722    0.763      0.575         0.571         0.653
+direct_band 0.6-0.8    last 10000.0      0.734    0.763      0.575         0.571         0.653
+direct_band 0.5-0.7    mean 10000.0      0.543    0.761      0.575         0.569         0.547
+direct_band 0.5-0.7    mean  1000.0      0.637    0.761      0.575         0.569         0.547
+direct_band 0.5-0.7    mean   100.0      0.638    0.761      0.575         0.569         0.547
+direct_band 0.6-0.8    mean  1000.0      0.635    0.761      0.571         0.563         0.573
+direct_band 0.6-0.8    mean 10000.0      0.553    0.761      0.571         0.563         0.573
+
+== two_step
+  config    band pooling   alpha  base_corr  acc_all  acc_mixed  acc_balanced  acc_official
+two_step 0.6-0.8    last   100.0      0.722    0.515      0.498         0.512         0.360
+two_step 0.5-0.7    last 10000.0      0.731    0.523      0.493         0.508         0.507
+two_step 0.6-1.0    last   100.0      0.709    0.515      0.489         0.506         0.400
+two_step 0.6-0.8    last 10000.0      0.734    0.527      0.489         0.506         0.493
+two_step 0.8-1.0    mean  1000.0      0.602    0.511      0.484         0.504         0.413
+two_step 0.7-0.9    last   100.0      0.712    0.510      0.484         0.502         0.347
+two_step 0.8-1.0    last 10000.0      0.724    0.531      0.484         0.500         0.480
+two_step 0.7-0.9    last 10000.0      0.726    0.530      0.484         0.500         0.493

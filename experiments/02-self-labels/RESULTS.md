@@ -61,3 +61,19 @@ two runs. Codabench ID 964172: 0.643 on the 14-case val set (same as layer-probe
 - 150 problems, 44 with mixed labels; the gap to the shared probe (+5 pts) is about one
   standard error.
 - No Olmo self-labels.
+
+## Update 2026-10-12: leakage-free rerun
+
+The organizers advised (Discord, 2026-10-09) excluding AIME 2024-2026 to avoid val/test leakage.
+48 of our 150 problems are AIME 2024 (18), 2025 (15) or 2026 (15); `scripts/leakage_exclusions.py`
+writes them to `data/excluded_problems.txt` and every analysis now drops them by default
+(`EXCLUDE_LEAKAGE=0` restores the old numbers). Outputs: `noleak/`.
+
+102 problems, 262 labels, 28 mixed problems (73 rows). Balanced accuracy on mixed rows:
+majority 0.55, shared probe 0.58, self direct best depth 0.61, two-step 0.47-0.51, blend 0.47-0.54
+(chosen config 0.53 / official 0.57), sampled base accuracy 0.71. Solve-rate r 0.70-0.74 (last
+token); four-sample agreement r 0.56. Within-model rules 0.37-0.51; model prior 0.63.
+Counterfactual rule on held-out halves 0.67-0.69 (26 mixed problems).
+
+The blend's earlier 0.63 does not survive: no probe clearly beats the majority. `submissions/self-probe-v2`
+holds heads retrained on the 102 problems (Codabench 980278).

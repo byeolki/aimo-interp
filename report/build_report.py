@@ -7,6 +7,7 @@ Numbers that come from csv files are read here; the rest are quoted from the RES
 
 import csv
 import html
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -95,15 +96,17 @@ def bar_chart(bars: list[tuple[str, float, float, str]], width=620, height=178) 
 def main() -> None:
     figure1 = line_chart(layer_curves(), {"per-model majority 0.51": 0.507, "surface text 0.48": 0.483})
     figure2 = bar_chart([
-        ("model identity only", 0.68, 0.68, "#7f7f7f"),
-        ("self-probe, own threshold", 0.52, 0.59, "#1f4e79"),
-        ("self-probe, per-problem rank (raw)", 0.63, 0.69, "#1f4e79"),
-        ("self-probe, within-model median", 0.48, 0.49, "#c0504d"),
-        ("self-probe, per-problem rank (z-scored)", 0.42, 0.49, "#c0504d"),
-        ("counterfactual rule (held-out halves)", 0.64, 0.66, "#548235"),
+        ("model identity only", 0.63, 0.63, "#7f7f7f"),
+        ("self-probe, own threshold", 0.53, 0.56, "#1f4e79"),
+        ("self-probe, per-problem rank (raw)", 0.50, 0.59, "#1f4e79"),
+        ("self-probe, within-model median", 0.37, 0.51, "#c0504d"),
+        ("self-probe, per-problem rank (z-scored)", 0.37, 0.43, "#c0504d"),
+        ("counterfactual rule (held-out halves)", 0.67, 0.69, "#548235"),
     ])
     template = (ROOT / "report" / "template.html").read_text(encoding="utf-8")
-    OUT.write_text(template.replace("{{FIGURE1}}", figure1).replace("{{FIGURE2}}", figure2), encoding="utf-8")
+    v2_score = os.environ.get("V2SCORE", "pending")
+    html_out = template.replace("{{FIGURE1}}", figure1).replace("{{FIGURE2}}", figure2).replace("{{V2SCORE}}", v2_score)
+    OUT.write_text(html_out, encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)}")
 
 
