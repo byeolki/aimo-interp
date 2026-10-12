@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from analyze import MODELS, FeatureStore, folds, load_rows, score  # noqa: E402
+from analyze import MODELS, FeatureStore, excluded_problems, folds, load_rows, score  # noqa: E402
 
 OUTPUT = ROOT / "runs" / "02-self-labels" / "cv_v2.csv"
 SEEDS = (0, 1, 2)
@@ -44,7 +44,8 @@ def solve_rate_rows() -> pd.DataFrame:
     with (ROOT / "data" / "self_labels.jsonl").open(encoding="utf-8") as handle:
         rows = [json.loads(line) for line in handle if line.strip()]
     frame = pd.DataFrame(rows)
-    return frame[frame["model_id"].isin(MODELS)][["model_id", "problem_id", "base"]]
+    frame = frame[frame["model_id"].isin(MODELS) & ~frame["problem_id"].isin(excluded_problems())]
+    return frame[["model_id", "problem_id", "base"]]
 
 
 def band_features(store: FeatureStore, problem_ids, band: tuple[float, float]) -> np.ndarray:

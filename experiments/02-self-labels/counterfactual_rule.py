@@ -1,7 +1,8 @@
-import json, glob, collections, random
+import json, glob, collections, random, os
+EXCLUDED = set() if os.environ.get('EXCLUDE_LEAKAGE','1')=='0' else set(open('data/excluded_problems.txt').read().split())
 fam=('rename','typos','distract')
 data=collections.defaultdict(dict)
-for f in glob.glob('runs/02-self-labels/*.jsonl'):
+for f in glob.glob('data/generations/*.jsonl'):
     m=f.split('/')[-1].replace('.jsonl','')
     for l in open(f):
         r=json.loads(l); data[(m,r['problem_id'])][r['family']]=(r['answers'],r['answer'])
@@ -20,7 +21,7 @@ def feat(e, oi, vi):
     return (max(p0-sum(e[f][0][i]==maj for i in vi)/len(vi) for f in fam), p0)
 rows=[]
 for (m,p),e in data.items():
-    if 'original' not in e: continue
+    if 'original' not in e or p in EXCLUDED: continue
     y=label(e, range(4,8), range(3,6))
     if y is None: continue
     rows.append((m,p,y,feat(e, range(0,4), range(0,3))))

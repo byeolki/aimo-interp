@@ -45,6 +45,16 @@ SHARED_ENCODER = "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
 N_FOLDS = 5
 SEEDS = (0, 1, 2)
 INCLUDE_BASE_ZERO = os.environ.get("INCLUDE_BASE_ZERO", "1") == "1"
+# Organizer advice (2026-10-09): drop AIME 2024-2026 to avoid val/test leakage. Set to 0 to
+# reproduce the first report version, which used all 150 problems.
+EXCLUDE_LEAKAGE = os.environ.get("EXCLUDE_LEAKAGE", "1") == "1"
+
+
+def excluded_problems() -> set[str]:
+    if not EXCLUDE_LEAKAGE:
+        return set()
+    path = ROOT / "data" / "excluded_problems.txt"
+    return {line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()}
 # Models whose self-label run has finished; the others are left out of this comparison.
 MODELS = tuple(m for m in SMALL_TRACK_MODELS if (FEATURE_DIRS[0] / f"{safe_model_id(m)}.npz").exists())
 
@@ -52,7 +62,9 @@ MODELS = tuple(m for m in SMALL_TRACK_MODELS if (FEATURE_DIRS[0] / f"{safe_model
 def load_rows() -> pd.DataFrame:
     with (ROOT / "data" / "self_labels.jsonl").open(encoding="utf-8") as handle:
         generated = [json.loads(line) for line in handle if line.strip()]
-    generated = [r for r in generated if r["is_robust"] is not None and (INCLUDE_BASE_ZERO or not r["base_zero"])]
+    excluded = excluded_problems()
+    generated = [r for r in generated if r["is_robust"] is not None and (INCLUDE_BASE_ZERO or not r["base_zero"])
+                 and r["problem_id"] not in excluded]
     official = [
         {"model_id": r.model_id, "problem_id": r.problem_id, "problem": r.problem, "is_robust": r.is_robust, "base": np.nan, "base_zero": False}
         for r in read_rows(ROOT / "data" / "labels.jsonl") if r.source == "train-main-v2"
