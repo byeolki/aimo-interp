@@ -31,7 +31,7 @@ def layer_curves() -> dict[str, list[tuple[float, float]]]:
     return curves
 
 
-def line_chart(curves: dict, baselines: dict[str, float], width=620, height=250) -> str:
+def line_chart(curves: dict, baselines: dict[str, float], width=620, height=215) -> str:
     left, right, top, bottom = 48, 190, 12, 34
     plot_w, plot_h = width - left - right, height - top - bottom
     y_min, y_max = 0.35, 1.0
@@ -58,7 +58,7 @@ def line_chart(curves: dict, baselines: dict[str, float], width=620, height=250)
         path = " ".join(f"{'M' if i == 0 else 'L'}{x(px):.1f},{y(py):.1f}" for i, (px, py) in enumerate(points))
         parts.append(f'<path d="{path}" fill="none" stroke="{color}" stroke-width="1.6"/>')
     for index, (label, color) in enumerate(zip(curves, colors)):
-        ly = top + 8 + index * 40
+        ly = top + 6 + index * 36
         parts.append(f'<line x1="{left + plot_w + 6}" x2="{left + plot_w + 22}" y1="{ly}" y2="{ly}" stroke="{color}" stroke-width="2"/>')
         words = label.split(", ")
         for j, word in enumerate(words):
@@ -67,8 +67,8 @@ def line_chart(curves: dict, baselines: dict[str, float], width=620, height=250)
     return "".join(parts)
 
 
-def bar_chart(bars: list[tuple[str, float, float, str]], width=620, height=210) -> str:
-    left, top, bar_h, gap = 250, 10, 18, 9
+def bar_chart(bars: list[tuple[str, float, float, str]], width=620, height=178) -> str:
+    left, top, bar_h, gap = 250, 8, 16, 7
     plot_w = width - left - 50
 
     def x(v):
