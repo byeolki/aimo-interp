@@ -89,6 +89,8 @@
 <p>Prompt representations encode whether a model can solve a problem, not whether its solution survives perturbation. Validating probes only on rows without per-problem label variation, or without a model-identity baseline, hides this, and self-generated labels inherit their generator's budget, perturbations and sample counts. Limitations: 102 problems, three models, an 8k budget, rule-based perturbations, the never-solved-is-robust convention, and a 14-case leaderboard. The final entry (<code>submissions/self-probe</code>) runs the 34 official rows offline in 38 s; labels, generations and all scripts are in the repository (about USD 10 of rented GPU time in total).</p>
 
 <div class="refs">
+<h2>AI Use Statement</h2>
+<p>In this work, we used generative AI tools (Anthropic Claude, through an agentic assistant) for ideation (experiment design and literature search), coding (label generation, probe training and analysis scripts), analysis (interpreting results and making figures) and writing (drafting and editing this report). We did not use generative AI tools to produce the labels or model outputs studied here; these come from the target models themselves, and the research direction and the final choices of claims and submissions were made by the author. We have reviewed all AI-assisted work and take responsibility for the final content of this paper.</p>
 <h2>References</h2>
 <p>[1] AIMO Interpretability Challenge. Competition proposal, NeurIPS 2026 Competition Track. arXiv:2607.13899, 2026. https://aimo-interp.github.io/</p>
 </div>
